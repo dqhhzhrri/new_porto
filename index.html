@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D'Qhaizhar - Creative Portfolio</title>
+    <!-- Font Awesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- ThreeUI CSS -->
+    <link rel="stylesheet" href="https://esm.sh/@designcodeio/threeui@latest/style.css">
+    
+    <!-- Import Map for React & ThreeUI -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.2.0",
+          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+          "@designcodeio/threeui": "https://esm.sh/@designcodeio/threeui@latest"
+        }
+      }
+    </script>
+    
+    <style>
+    /* === BASE & TYPOGRAPHY (Robin Noguier Style) === */
+    :root {
+        --bg-dark: #09090b;
+        --surface: rgba(24, 24, 27, 0.75); /* Dibuat semi-transparan agar video background terlihat samar */
+        --surface-hover: rgba(39, 39, 42, 0.85);
+        --text-main: #f8fafc;
+        --text-muted: #a1a1aa;
+        --accent: #d4d4d8; 
+        --neon: #e4e4e7;
+        --mouse-x: 50vw;
+        --mouse-y: 50vh;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; cursor: none; /* Hide default cursor */ }
+    body {
+        background-color: var(--bg-dark);
+        color: var(--text-main);
+        font-family: 'Inter', sans-serif;
+        overflow-x: hidden;
+        scroll-snap-type: y mandatory;
+        height: 100vh;
+        overflow-y: scroll;
+        scroll-behavior: smooth;
+    }
+    h1, h2, h3 { font-family: 'Syne', sans-serif; letter-spacing: -1px; }
+
+    /* VIDEO BACKGROUND (NEW) */
+    .bg-video-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .bg-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: brightness(0.4) contrast(1.2); /* Menyesuaikan kegelapan agar teks tetap terbaca dengan jelas */
+    }
+    .bg-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(9, 9, 11, 0.3) 0%, rgba(9, 9, 11, 0.85) 100%);
+    }
+
+    /* FIRE CANVAS PARTICLE TRAIL (NEW) */
+    #fireCanvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        pointer-events: none;
+        z-index: 9998;
+    }
+
+    /* Dynamic Background Spotlight */
+    body::after {
+        content: "";
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none;
+        z-index: 1;
+        background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y), rgba(255, 120, 30, 0.08), transparent 80%);
+        transition: opacity 0.3s ease;
+    }
+
+    /* Noise Overlay (Natalie Almosa touch) */
+    .noise::before {
+        content: ""; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; z-index: 9999; opacity: 0.04;
+        background-image: url('https://www.transparenttextures.com/patterns/stardust.png');
+    }
+
+    /* === CUSTOM CURSOR === */
+    .cursor-dot, .cursor-outline {
+        position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
+        border-radius: 50%; z-index: 10000; pointer-events: none;
+    }
+    .cursor-dot {
+        width: 8px; height: 8px; background-color: #ff9933;
+        box-shadow: 0 0 10px #ff6600, 0 0 20px #ff3300;
+        transition: width 0.2s, height 0.2s;
+    }
+    .cursor-outline {
+        width: 40px; height: 40px; border: 1px solid rgba(255, 153, 51, 0.6);
+        transition: transform 0.1s ease-out, width 0.2s, height 0.2s, background-color 0.2s, border-color 0.2s;
+    }
+    body.hovering .cursor-outline { 
+        width: 60px; height: 60px; 
+        background-color: rgba(255, 102, 0, 0.15); 
+        border-color: #ff6600;
+        box-shadow: 0 0 15px rgba(255, 102, 0, 0.4);
+    }
+    body.hovering .cursor-dot { opacity: 0; }
+
+    .slide {
+        min-height: 100vh; 
+        width: 100vw; 
+        scroll-snap-align: start;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+        align-items: center;
+        padding: 4rem 5%; 
+        position: relative;
+        z-index: 2;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .slide.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .section-title { 
+        font-size: 3.5vw; 
+        margin-bottom: 2rem; 
+        text-align: center; 
+        font-weight: 800; 
+        text-transform: uppercase; 
+        color: var(--text-muted); 
+        opacity: 0.3; 
+    }
+
+    /* === BENTO GRID === */
+    .bento-grid {
+        display: grid; 
+        grid-template-columns: repeat(4, 1fr); 
+        grid-auto-rows: minmax(180px, auto);
+        gap: 1.5rem; 
+        width: 100%; 
+        max-width: 1200px;
+    }
+    .bento-card {
+        background: var(--surface); 
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 24px; 
+        padding: 1.8rem;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: background 0.3s ease, transform 0.1s, border-color 0.3s, box-shadow 0.3s;
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center;
+        /* 3D setup */
+        transform-style: preserve-3d;
+        perspective: 1000px;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* FIRE GLOW BORDER EFFECT ON HOVER (NEW) */
+    .bento-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: 24px;
+        padding: 2px;
+        background: radial-gradient(350px circle at var(--card-x, 50%) var(--card-y, 50%), #ffaa00, #ff3300 50%, transparent 80%);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .bento-card:hover::before {
+        opacity: 1;
+    }
+    .bento-card:hover { 
+        background: var(--surface-hover); 
+        box-shadow: 0 10px 30px rgba(255, 68, 0, 0.25), inset 0 0 15px rgba(255, 102, 0, 0.1);
+        border-color: rgba(255, 102, 0, 0.3);
+    }
+    .bento-card.col-2 { grid-column: span 2; }
+    .bento-card.row-2 { grid-row: span 2; }
+
+    .bento-content { 
+        transform: translateZ(30px);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* Profil Spesifik - Wadah Foto Lonjong */
+    .profile-img-container {
+        width: 100%;            
+        max-width: 320px;       
+        height: 110px;           
+        border-radius: 25px;     
+        background: #c0c0c0;     
+        border: 2px solid #000;  
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.5); 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 1rem;
+        overflow: hidden;        
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .profile-img-container:hover {
+        transform: scale(1.02);
+        box-shadow: 0 5px 20px rgba(255, 102, 0, 0.3);
+    }
+
+    /* Foto di dalamnya */
+    .profile-img-container .profile-img {
+        width: 100%;             
+        height: 100%;            
+        object-fit: cover;       
+        border-radius: 20px;     
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .tags-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+    }
+
+    .tag-pill { 
+        display: inline-block; 
+        padding: 6px 14px; 
+        border: 1px solid rgba(255,255,255,0.2); 
+        border-radius: 20px; 
+        font-size: 0.8rem; 
+        white-space: nowrap;
+        transition: border-color 0.3s, transform 0.2s, background-color 0.3s, box-shadow 0.3s;
+    }
+    .tag-pill:hover {
+        border-color: #ff6600;
+        transform: translateY(-2px);
+        background-color: rgba(255, 102, 0, 0.15);
+        box-shadow: 0 0 10px rgba(255, 102, 0, 0.3);
+    }
+
+    /* === TABS & FILTER BUTTONS === */
+    .magnetic-wrap { display: inline-block; padding: 5px; }
+    .btn-magnetic {
+        background: rgba(24, 24, 27, 0.6); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2);
+        padding: 12px 28px; border-radius: 30px; font-family: 'Syne', sans-serif; font-weight: 600;
+        backdrop-filter: blur(8px);
+        transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    }
+    .btn-magnetic.active { 
+        background: #ff6600; 
+        color: white; 
+        border-color: #ff8833;
+        box-shadow: 0 0 20px rgba(255, 102, 0, 0.5);
+    }
+    .btn-magnetic:hover { border-color: #ff6600; }
+    .filter-container { display: flex; justify-content: center; gap: 0.8rem; margin-bottom: 2rem; flex-wrap: wrap; width: 100%; }
+
+    /* === EXPERIENCE ACCORDION / LIST === */
+    .exp-content { display: none; width: 100%; max-width: 1000px; animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .exp-content.active { display: block; }
+    .exp-item { 
+        border-bottom: 1px solid rgba(255,255,255,0.1); 
+        padding: 1.5rem 0; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: flex-start; 
+        gap: 1.5rem;
+        transition: transform 0.3s ease, padding-left 0.3s ease;
+    }
+    .exp-item:hover {
+        transform: translateX(8px);
+    }
+    .exp-item h3 { font-size: 1.3rem; margin-bottom: 0.3rem; line-height: 1.3; }
+    .exp-item span { color: var(--text-muted); font-size: 0.9rem; white-space: nowrap; }
+
+    /* === PROJECT GALLERY === */
+    .project-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; width: 100%; max-width: 1100px; }
+    .project-card {
+        background: var(--surface); 
+        padding: 2.5rem 2rem; 
+        border-radius: 20px;
+        text-align: center; 
+        position: relative; 
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+        backdrop-filter: blur(12px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.2s ease;
+    }
+    /* FIRE BORDER FOR PROJECT CARDS */
+    .project-card::after {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        border-radius: 20px;
+        padding: 2px;
+        background: radial-gradient(350px circle at var(--card-x, 50%) var(--card-y, 50%), #ffaa00, #ff3300 50%, transparent 80%);
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .project-card:hover::after {
+        opacity: 1;
+    }
+    .project-card::before {
+        content: ''; position: absolute; top: 100%; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(135deg, #ffffff 0%, #ffe6cc 100%); transition: top 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 0;
+    }
+    a.project-card {
+        text-decoration: none; 
+        color: inherit;         
+        display: flex;          
+    }
+    .project-card:hover {
+        box-shadow: 0 12px 35px rgba(255, 85, 0, 0.3);
+    }
+    .project-card:hover::before { top: 0; }
+    .project-card h3, .project-card p, .project-card .tag-pill {
+        position: relative; z-index: 1; transition: color 0.4s;
+    }
+    .project-card:hover h3, .project-card:hover p { color: black; }
+    .project-card:hover .tag-pill { border-color: #ff5500; color: black; background-color: rgba(255, 102, 0, 0.1); }
+
+    /* === SOCIAL MEDIA === */
+    .huge-contact { font-size: 7vw; font-family: 'Syne', sans-serif; font-weight: 800; text-align: center; margin-bottom: 2rem; transition: transform 0.3s, text-shadow 0.3s; }
+    .huge-contact:hover { -webkit-text-stroke: 2px #ff6600; color: transparent; text-shadow: 0 0 30px rgba(255, 102, 0, 0.6); }
+
+    .social-icons { display: flex; justify-content: center; gap: 2.5rem; flex-wrap: wrap; }
+    .soc-icon {
+        font-size: 2.5rem; color: white; display: flex; justify-content: center; align-items: center;
+        width: 70px; height: 70px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(24, 24, 27, 0.6);
+        backdrop-filter: blur(8px);
+        text-decoration: none; transition: background 0.3s, color 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+    .soc-icon:hover { 
+        background: #ff6600; 
+        color: white; 
+        border-color: #ff9933;
+        box-shadow: 0 0 25px rgba(255, 102, 0, 0.7); 
+    }
+
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Responsif untuk Layar HP/Tablet */
+    @media(max-width: 900px) {
+        .slide { height: auto; min-height: 100vh; padding: 4rem 1.5rem; }
+        .section-title { font-size: 2.5rem; }
+        .bento-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+        .bento-card.col-2, .bento-card.row-2 { grid-column: span 1; grid-row: span 1; }
+        .project-grid { grid-template-columns: 1fr; }
+        .exp-item { flex-direction: column; gap: 0.5rem; }
+        .exp-item span { white-space: normal; }
+    }
+</style>
+</head>
+
+<body class="noise">
+
+<!-- VIDEO BACKGROUND (NEW) -->
+<div class="bg-video-container">
+    <video class="bg-video" autoplay loop muted playsinline>
+        <source src="https://assets.mixkit.co/videos/preview/mixkit-fire-sparks-and-flames-in-the-dark-41525-large.mp4" type="video/mp4">
+    </video>
+    <div class="bg-overlay"></div>
+</div>
+
+<!-- FIRE TRAIL CANVAS (NEW) -->
+<canvas id="fireCanvas"></canvas>
+
+<!-- Custom Cursor Elements -->
+<div class="cursor-dot"></div>
+<div class="cursor-outline"></div>
+
+<!-- SLIDE 0: HERO (Kage Landing Page Integration via ThreeUI) -->
+<section class="slide visible" id="hero" style="padding: 0; display: block; max-width: 100%; justify-content: unset; align-items: unset; width: 100vw; height: 100vh;">
+    <!-- Container untuk render React -->
+    <div id="threeui-root" style="width: 100%; height: 100%;"></div>
+</section>
+
+<!-- SLIDE 1: PROFIL (Bento Box) -->
+<section class="slide" id="profil">
+    <h2 class="section-title">Profil</h2>
+    <div class="bento-grid">
+        <!-- Kartu Utama -->
+        <div class="bento-card col-2 row-2 tilt-card interactive">
+            <div class="bento-content">
+                <div class="profile-img-container">
+                    <img src="Assets/foto-ku.jpeg" alt="Avatar" class="profile-img">
+                </div>
+                <h1 style="font-size: 2.2rem; line-height: 1.2;">D'Qhaizhar Ari Dhiaulhaq</h1>
+                <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.5;">
+                    Mahasiswa Teknologi Informasi ITS angkatan 2025. NRP 083. <br>
+                    Berfokus pada Cybersecurity dan Digital Forensics.
+                </p>
+                <div class="tags-wrapper">
+                    <span class="tag-pill">C / C++</span>
+                    <span class="tag-pill">Python</span>
+                    <span class="tag-pill">SQL</span>
+                    <span class="tag-pill">HTML / JS</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Kartu Pendidikan -->
+        <div class="bento-card tilt-card interactive">
+            <div class="bento-content">
+                <h3 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">PENDIDIKAN</h3>
+                <h2 style="font-size: 1.8rem; margin-bottom: 5px;">ITS</h2>
+                <p>IPK 3.25</p>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">(Jull 2025 - Sekarang)</p>
+            </div>
+        </div>
+
+        <!-- Kartu Pendidikan 2 -->
+        <div class="bento-card tilt-card interactive">
+            <div class="bento-content">
+                <h3 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">SEKOLAH</h3>
+                <h2 style="font-size: 1.8rem; margin-bottom: 5px;">SMAN 11 Bekasi</h2>
+                <p>Nilai Akhir 90.75</p>
+            </div>
+        </div>
+
+        <!-- Kartu Minat -->
+        <div class="bento-card col-2 tilt-card interactive">
+            <div class="bento-content">
+                <h3 style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 5px;">SOFT SKILL & HOBI</h3>
+                <p style="font-size: 0.95rem; line-height: 1.5;">Leadership, Public Speaking, Event Management, Desain Canva, Stock Trading, Badminton, Web Developmen, & Programming.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SLIDE 2: PENGALAMAN (Tabs & List) -->
+<section class="slide" id="pengalaman">
+    <h2 class="section-title">Pengalaman</h2>
+
+    <div class="filter-container">
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive active" onclick="switchExp('org')">Organisasi / Kepanitiaan</button></div>
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive" onclick="switchExp('work')">Pengalaman Kerja</button></div>
+    </div>
+
+    <div id="org" class="exp-content active">
+        <div class="exp-item interactive">
+            <div>
+                <h3>Maju Bersama OSIS</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Ketua Fasilitator</span></div>
+            </div>
+            <span>Juni 2024 - September 2025</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>Duta Literasi Digital Indonesia</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Co-Founder</span></div>
+            </div>
+            <span>Februari 2025 - Desember 2025</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>Elite X Pesraf 2026</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Staff Divisi Event Cabang Olahraga Badminton</span></div>
+            </div>
+            <span>September 2025 - September 2026</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>ARA 7.0</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Staff Divisi Event</span></div>
+            </div>
+            <span>Agustus 2025 - Maret 2026</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>Gerigi X UKM Expo 2026 - ITS</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Staff Divisi Secretarial (Kestari/Pendamping Mentor & 19 Mahasiswa baru)</span></div>
+            </div>
+            <span>Juli 2026 - Agustus 2026</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>OKKBK IT - ITS</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Staff Divisi Event</span></div>
+            </div>
+            <span>Juli 2026 - Agustus 2026</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>Inclenation 2026 - ITS</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Staff Divisi Mentor (Pendamping 9 Mahasiswa baru)</span></div>
+            </div>
+            <span>Juli 2026 - Sekarang</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>ARA 8.0</h3>
+                <div class="tags-wrapper"><span class="tag-pill">Vice Project Officer (Internal)</span></div>
+            </div>
+            <span>Juli 2026 - Sekarang</span>
+        </div>
+    </div>
+
+    <div id="work" class="exp-content">
+        <div class="exp-item interactive">
+            <div>
+                <h3>Coco Edukasi Indonesia</h3>
+                <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.95rem;">Merancang poster, narasi promosi, & pengisi suara.</p>
+                <div class="tags-wrapper"><span class="tag-pill">Graphic Design & Content Creator</span></div>
+            </div>
+            <span>Januari 2023</span>
+        </div>
+        <div class="exp-item interactive">
+            <div>
+                <h3>Asisten Dosen Matakuliah Hukum dan Etika Teknologi Informasi - ITS</h3>
+                <p style="color: var(--text-muted); margin-top: 5px; font-size: 0.95rem;">Mengajar Mahasiswa semester 1 dalam Matakuliah Hukum dan Etika Teknologi Informasi dan merekap data Mahasiswa semester 1.</p>
+                <div class="tags-wrapper"><span class="tag-pill">Asisten Dosen</span></div>
+            </div>
+            <span>September 2026 - Sekarang</span>
+        </div>
+    </div>
+</section>
+
+<!-- SLIDE 3: PROJECT (Filter & Hover Reveal) -->
+<section class="slide" id="project">
+    <h2 class="section-title">Project</h2>
+
+    <div class="filter-container">
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive active" onclick="filterProj('all')">Semua Project</button></div>
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive" onclick="filterProj('kuliah')">Tugas Kuliah</button></div>
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive" onclick="filterProj('pribadi')">Project Pribadi</button></div>
+        <div class="magnetic-wrap"><button class="btn-magnetic interactive" onclick="filterProj('bersama')">Project Bersama</button></div>
+    </div>
+
+    <div class="project-grid">
+    <!-- Project 1 -->
+    <a href="https://github.com/saktisadhana/EDA-PROJECT.git" target="_blank" class="project-card proj-item interactive" data-type="kuliah bersama">
+        <h3>Final Project Statistika dan Probabilitas</h3>
+        <p style="margin: 10px 0; font-size: 0.95rem; line-height: 1.4;">Meng-identifikasi Pola Serangan Jaringan Menggunakan Dataset Drone Based Malware Detection (DBMD).</p>
+        <div class="tags-wrapper" style="justify-content: center;">
+            <span class="tag-pill">Oktober 2025</span> 
+            <span class="tag-pill">Project Bersama</span>
+        </div>
+    </a>
+    
+    <!-- Project 2 -->
+    <a href="https://github.com/saktisadhana/ATP_Group-Project.git" target="_blank" class="project-card proj-item interactive" data-type="kuliah bersama">
+        <h3>Final Project Algoritma dan Teknik Pemograman</h3>
+        <p style="margin: 10px 0; font-size: 0.95rem; line-height: 1.4;">Membuat dan mengaplikasikan materi Linklist, fungsi, dll.</p>
+        <div class="tags-wrapper" style="justify-content: center;">
+            <span class="tag-pill">Oktober 2026</span> 
+            <span class="tag-pill">Project Bersama</span>
+        </div>
+    </a>
+
+    <!-- Project 3 -->
+    <a href="" target="_blank" class="project-card proj-item interactive" data-type="pribadi">
+        <h3>Analisis & Trading Stockbit</h3>
+        <p style="margin: 10px 0; font-size: 0.95rem; line-height: 1.4;">Evaluasi portofolio ekuitas dan parameter pasar modal (WBSA).</p>
+        <div class="tags-wrapper" style="justify-content: center;">
+            <span class="tag-pill">April 2025 - sekarang</span> 
+            <span class="tag-pill">Project Pribadi</span>
+        </div>
+    </a>
+
+    <!-- Project 4 -->
+    <a href="https://evastra25.vercel.app/" target="_blank" class="project-card proj-item interactive" data-type="kuliah bersama">
+        <h3>Membuat identitas angkatan</h3>
+        <p style="margin: 10px 0; font-size: 0.95rem; line-height: 1.4;">Mengisi profil diri dan memberikan animasi pada card profil diri.</p>
+        <div class="tags-wrapper" style="justify-content: center;">
+            <span class="tag-pill">April 2026</span> 
+            <span class="tag-pill">Project Bersama</span>
+        </div>
+    </a>
+</div>
+</section>
+
+<!-- SLIDE 4: SOSIAL MEDIA (Big Typography) -->
+<section class="slide" id="sosial">
+    <div style="width: 100%; text-align: center;">
+        <h1 class="huge-contact interactive">CONTACT ME!</h1>
+        <div class="social-icons">
+            <div class="magnetic-wrap">
+                <a href="https://wa.me/6282261610521" target="_blank" class="soc-icon interactive"><i class="fab fa-whatsapp"></i></a>
+            </div>
+            <div class="magnetic-wrap">
+                <a href="https://instagram.com/dqh_zzr" target="_blank" class="soc-icon interactive"><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="magnetic-wrap">
+                <a href="https://linkedin.com/in/d-qhaizhar-ari-dhiaulhaq" target="_blank" class="soc-icon interactive"><i class="fab fa-linkedin-in"></i></a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- === JAVASCRIPT LOGIC === -->
+<script>
+    // 1. CUSTOM CURSOR & SPOTLIGHT EFFECT (Robin Noguier style)
+    const dot = document.querySelector('.cursor-dot');
+    const outline = document.querySelector('.cursor-outline');
+
+    window.addEventListener('mousemove', (e) => {
+        const posX = e.clientX;
+        const posY = e.clientY;
+
+        // Global CSS mouse coordinates update for global spotlight
+        document.documentElement.style.setProperty('--mouse-x', `${posX}px`);
+        document.documentElement.style.setProperty('--mouse-y', `${posY}px`);
+
+        // Dot follows exactly
+        dot.style.left = `${posX}px`;
+        dot.style.top = `${posY}px`;
+
+        // Outline follows with slight delay
+        outline.animate({
+            left: `${posX}px`,
+            top: `${posY}px`
+        }, { duration: 300, fill: "forwards" });
+    });
+
+    // Add Hover effect on interactable elements
+    document.querySelectorAll('.interactive').forEach(el => {
+        el.addEventListener('mouseenter', () => document.body.classList.add('hovering'));
+        el.addEventListener('mouseleave', () => document.body.classList.remove('hovering'));
+    });
+
+    // 2. FIRE TRAIL PARTICLE CANVAS LOGIC (NEW)
+    const canvas = document.getElementById('fireCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class FireParticle {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.size = Math.random() * 5 + 2;
+            this.speedX = (Math.random() - 0.5) * 2;
+            this.speedY = (Math.random() - 1) * 3 - 1; // Bergerak perlahan ke atas menyerupai bara api
+            this.color = `hsl(${Math.random() * 30 + 10}, 100%, 55%)`; // Gradasi warna dari merah ke oranye terang
+            this.life = 1;
+            this.decay = Math.random() * 0.03 + 0.015;
+        }
+        update() {
+            this.x += this.speedX;
+            this.y += this.speedY;
+            this.life -= this.decay;
+            if (this.size > 0.2) this.size -= 0.1;
+        }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.life;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ff5500';
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+        // Hasilkan bara api baru setiap kursor digerakkan
+        for (let i = 0; i < 3; i++) {
+            particles.push(new FireParticle(e.clientX, e.clientY));
+        }
+    });
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            particles[i].update();
+            particles[i].draw();
+            if (particles[i].life <= 0) {
+                particles.splice(i, 1);
+                i--;
+            }
+        }
+        requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // 3. MAGNETIC BUTTONS (Bruno Simon style)
+    document.querySelectorAll('.magnetic-wrap').forEach(wrap => {
+        const btn = wrap.querySelector('.btn-magnetic, .soc-icon');
+        wrap.addEventListener('mousemove', (e) => {
+            const rect = wrap.getBoundingClientRect();
+            const h = rect.width / 2;
+            const v = rect.height / 2;
+            const x = e.clientX - rect.left - h;
+            const y = e.clientY - rect.top - v;
+            btn.style.transform = `translate(${x * 0.4}px, ${y * 0.4}px)`;
+        });
+        wrap.addEventListener('mouseleave', () => {
+            btn.style.transform = `translate(0px, 0px)`;
+        });
+    });
+
+    // 4. 3D TILT EFFECT & BORDER GLOW ON BENTO CARDS & PROJECT CARDS
+    document.querySelectorAll('.bento-card, .project-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left; 
+            const y = e.clientY - rect.top;
+
+            // Update koordinat spotlight api untuk border
+            card.style.setProperty('--card-x', `${x}px`);
+            card.style.setProperty('--card-y', `${y}px`);
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = ((y - centerY) / centerY) * -8; 
+            const rotateY = ((x - centerX) / centerX) * 8;
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.01, 1.01, 1.01)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+            card.style.transition = 'transform 0.5s ease';
+        });
+
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'none';
+        });
+    });
+
+    // 5. TAB LOGIC (Pengalaman)
+    function switchExp(tabId) {
+        document.querySelectorAll('#pengalaman .btn-magnetic').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        document.querySelectorAll('.exp-content').forEach(content => {
+            content.classList.remove('active');
+            content.style.animation = 'none'; 
+        });
+        const activeContent = document.getElementById(tabId);
+        activeContent.classList.add('active');
+        setTimeout(() => activeContent.style.animation = 'fadeInUp 0.6s forwards', 10);
+    }
+
+    // 6. FILTER LOGIC (Project)
+    function filterProj(category) {
+        document.querySelectorAll('#project .btn-magnetic').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+
+        const projects = document.querySelectorAll('.proj-item');
+        projects.forEach(proj => {
+            proj.style.display = 'none'; 
+            const types = proj.dataset.type ? proj.dataset.type.split(' ') : [];
+            if (category === 'all' || types.includes(category)) {
+                setTimeout(() => {
+                    proj.style.display = 'flex';
+                    proj.style.animation = 'fadeInUp 0.5s forwards';
+                }, 50);
+            }
+        });
+    }
+
+    // 7. SCROLL REVEAL OBSERVER
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.slide').forEach(slide => {
+        observer.observe(slide);
+    });
+</script>
+
+<!-- === THREEUI REACT INTEGRATION === -->
+<!-- Kode modul integrasi React ke vanilla HTML -->
+<script type="module">
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import { KageLandingPage } from '@designcodeio/threeui';
+
+    // Mendefinisikan function render mirip TSX dari permintaan awal
+    function Scene() {
+        return React.createElement(
+            'div',
+            { className: 'shader-frame', style: { width: '100%', height: '100%' } },
+            React.createElement(KageLandingPage, {
+                headingFont: "onest",
+                bodyFont: "onest",
+                headingWeight: "400",
+                bodyWeight: "300",
+                primaryColor: "#e0231c",
+                headingSize: 46,
+                bodySize: 17,
+                headingLetterSpacing: -0.012
+            })
+        );
+    }
+
+    // Menyuntikkan komponen React ke div #threeui-root di slide Hero
+    const rootElement = document.getElementById('threeui-root');
+    if (rootElement) {
+        const root = createRoot(rootElement);
+        root.render(React.createElement(Scene));
+    }
+</script>
+
+</body>
+</html>
